@@ -4,7 +4,7 @@ package zs
  * This file contains type definitions corresponding to XML schema
  * of a search result from Zillow service.
  * It also contains XML tag names to unmarshal XML text to data object.
- * Currently the search reslut is only partially mapped. We take only the fields
+ * Currently the search result is only partially mapped. We take only the fields
  * we're interested in and send them to client.
  * If more fields are needed, we can add more types and include them.
  */
