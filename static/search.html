@@ -1,0 +1,109 @@
+<html>
+<head>
+<script>
+function searchZillow() {
+  var resultsElement = document.getElementById("results");
+  resultsElement.innerHTML = '';
+
+  var address = document.getElementById("address").value;
+  var citystatezip = document.getElementById("citystate").value + ' ' + document.getElementById("zip").value;
+
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4) {
+      if (this.status == 200) {
+        processResponse(this.responseText);
+      } else {
+        resultsElement.innerHTML = 'Error: no response from server.';
+      }
+    }
+  };
+  xhttp.open('GET', '/api/search?address=' + address + '&citystatezip=' + citystatezip, true);
+  xhttp.send();
+}
+
+function processResponse(responseJson) {
+  var response = JSON.parse(responseJson);
+  var resultsElement = document.getElementById("results");
+
+  if (response && response.Message) {
+    if (response.Message.Code != 0) {
+      resultsElement.innerText = response.Message.Text || 'No results found.';
+      return;
+    }
+
+    if (!response.Response.Result || response.Response.Result.length == 0) {
+      resultsElement.innerText = 'Result is empty.';
+      return;
+    }
+
+    displayResults(resultsElement, response.Response.Result);
+  }
+}
+
+function displayResults(container, results) {
+  for (var i = 0; i < results.length; i++) {
+    var result = results[i];
+    var resultElement = renderResult(result);
+    container.appendChild(resultElement);
+  }
+}
+
+const RESULT_TEMPLATE = '' +
+'<div class="result">' +
+'  <div>Address: {$address}</div>' +
+'  <div>Zestimate: {$zestimate}</div>' +
+'  <div>' +
+'    More info:' +
+'    <a href="{$homeDetails}" target="_blank">Home details</a>' +
+'    <a href="{$graphsAndData}" target="_blank">Charts and data</a>' +
+'    <a href="{$mapThisHome}" target="_blank">Map</a>' +
+'    <a href="{$comparables}" target="_blank">Comparisons</a>' +
+'  </div>' +
+'</div>';
+
+function renderResult(result) {
+  var address = result.Address.Street + ', ' + result.Address.City + ', ' + result.Address.State
+      + ' ' + result.Address.ZipCode;
+  var zestimate = result.Zestimate.Amount.Value + ' ' + result.Zestimate.Amount.Currency;
+  var html = RESULT_TEMPLATE
+      .replace("{$address}", address)
+      .replace("{$zestimate}", zestimate)
+      .replace("{$homeDetails}", result.Links.HomeDetails)
+      .replace("{$graphsAndData}", result.Links.GraphsAndData)
+      .replace("{$mapThisHome}", result.Links.MapThisHome)
+      .replace("{$comparables}", result.Links.Comparables);
+
+  var divElement = document.createElement("div");
+  divElement.innerHTML = html;
+
+  return divElement;
+}
+</script>
+
+<style>
+.results {
+  margin-top: 20px;
+}
+
+.result {
+  margin: 10px 0;
+}
+</style>
+</head>
+<body>
+  <h1>Zillow Search</h1>
+  <div>
+    <div>
+      Address line: <input type='text' id='address' value='2114 Bigelow Ave' />
+    </div>
+    <div>
+      City and State: <input type='text' id='citystate' value='Seattle, WA' />
+      and/or ZIP: <input type='text' id='zip' />
+    </div>
+    <button type="button" onclick="searchZillow()">Search</button>
+  </div>
+  <div id='results' class='results'>
+  </div>
+</body>
+</html>
